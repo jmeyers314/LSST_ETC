@@ -8,11 +8,13 @@ import numpy as np
 import galsim
 
 # Some constants
-pixel_scale = 0.2 # arcsec
+# --------------
+#
 # LSST effective area in meters^2
 A = 6.4**2 * np.pi
 # zeropoints from DK notes in photons per second per pixel
 # should eventually compute these on the fly from filter throughput functions.
+# these must be functions of pixel_scale, right?
 s0 = A * np.r_[0.732, 2.124, 1.681, 1.249, 0.862, 0.452]
 # Sky brightnesses in AB mag / arcsec^2.
 # stole these from http://www.lsst.org/files/docs/gee_137.28.pdf
@@ -27,10 +29,11 @@ sbar = s0 * 10**(-0.4*(B-24.0))
 banddict = {'u':0, 'g':1, 'r':2, 'i':3, 'z':4, 'y':5}
 
 class ETC(object):
-    def __init__(self, profile, pixel_scale=0.2, stamp_size=15):
+    def __init__(self, profile, pixel_scale=0.2, stamp_size=15, threshold=0.0):
+        self.profile = profile
         self.pixel_scale = pixel_scale
         self.stamp_size = stamp_size
-        self.profile = profile
+        self.threshold = threshold
 
     def SNR(self, mag, band='r'):
         img = galsim.ImageD(self.stamp_size, self.stamp_size, scale=self.pixel_scale)
@@ -39,9 +42,12 @@ class ETC(object):
         flux = s0[iband] * 10**(-0.4*(mag - 24.0)) * exptime
         self.profile.setFlux(flux)
         self.profile.drawImage(image=img)
-        imgsqr = img.array**2
+        sky = sbar[iband] * exptime * self.pixel_scale**2
+        sigma_sky = np.sqrt(sky)
+        mask = img.array > (self.threshold * sigma_sky)
+        imgsqr = img.array**2*mask
         signal = imgsqr.sum()
-        noise = np.sqrt((imgsqr * sbar[iband] * exptime * self.pixel_scale**2).sum())
+        noise = np.sqrt((imgsqr * sky).sum())
         return signal / noise
 
     def err(self, mag, band='r'):
@@ -91,6 +97,9 @@ if __name__ == '__main__':
     # Magnitude!
     parser.add_argument("--mag", type=float, default=25.3,
                         help="magnitude of galaxy")
+    # threshold
+    parser.add_argument("--threshold", type=float, default=0.0,
+                        help="Threshold, in sigma-sky units, above which to include pixels")
 
     args = parser.parse_args()
 
@@ -107,7 +116,8 @@ if __name__ == '__main__':
 
     profile = galsim.Convolve(psf, gal)
 
-    etc = ETC(profile, pixel_scale=args.pixel_scale, stamp_size=args.stamp_size)
+    etc = ETC(profile, pixel_scale=args.pixel_scale, stamp_size=args.stamp_size,
+              threshold=args.threshold)
 
     print "input magnitude: {}".format(args.mag)
     print "output SNR: {}".format(etc.SNR(args.mag, args.band))
