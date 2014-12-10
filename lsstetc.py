@@ -11,10 +11,10 @@ import galsim
 # --------------
 #
 # LSST effective area in meters^2
-A = 6.4**2 * np.pi
+A = 319/9.6 # etendue / FoV.  I *think* this includes vignetting
+
 # zeropoints from DK notes in photons per second per pixel
 # should eventually compute these on the fly from filter throughput functions.
-# these must be functions of pixel_scale, right?
 s0 = {'u': A*0.732,
       'g': A*2.124,
       'r': A*1.681,
@@ -23,6 +23,7 @@ s0 = {'u': A*0.732,
       'Y': A*0.452}
 # Sky brightnesses in AB mag / arcsec^2.
 # stole these from http://www.lsst.org/files/docs/gee_137.28.pdf
+# should eventually construct a sky SED (varies with the moon phase) and integrate to get these
 B = {'u': 22.8,
      'g': 22.2,
      'r': 21.3,
