@@ -31,13 +31,13 @@ B = {'u': 22.8,
      'z': 19.1,
      'Y': 18.1}
 # number of visits
-# From http://www.lsst.org/files/docs/137.03_Pinto_Cadence_Design_8x10.pdf
+# From LSST Science Book
 fiducial_nvisits = {'u': 56,
                     'g': 80,
-                    'r': 184,
-                    'i': 184,
-                    'z': 160,
-                    'Y': 160}
+                    'r': 180,
+                    'i': 180,
+                    'z': 164,
+                    'Y': 164}
 # exposure time per visit
 visit_time = 30.0
 # Sky brightness per arcsec^2 per second
