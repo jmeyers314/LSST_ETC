@@ -11,7 +11,7 @@ import galsim
 # --------------
 #
 # LSST effective area in meters^2
-A = 319/9.6 # etendue / FoV.  I *think* this includes vignetting
+A = 319/9.6  # etendue / FoV.  I *think* this includes vignetting
 
 # zeropoints from DK notes in photons per second per pixel
 # should eventually compute these on the fly from filter throughput functions.
@@ -47,6 +47,7 @@ for k in B.keys():
 
 # And some random numbers for drawing
 bd = galsim.BaseDeviate(1)
+
 
 class ETC(object):
     def __init__(self, band, pixel_scale=None, stamp_size=None, threshold=0.0,
