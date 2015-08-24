@@ -67,7 +67,7 @@ class ETC(object):
     def draw(self, profile, mag, noise=False):
         img = galsim.ImageD(self.stamp_size, self.stamp_size, scale=self.pixel_scale)
         flux = self.s0 * 10**(-0.4*(mag - 24.0)) * self.exptime
-        profile.setFlux(flux)
+        profile = profile.withFlux(flux)
         profile.drawImage(image=img)
         if noise:
             gd = galsim.GaussianNoise(bd, sigma=self.sigma_sky)
