@@ -42,7 +42,7 @@ fiducial_nvisits = {'u': 56,
 visit_time = 30.0
 # Sky brightness per arcsec^2 per second
 sbar = {}
-for k in B.keys():
+for k in B:
     sbar[k] = s0[k] * 10**(-0.4*(B[k]-24.0))
 
 # And some random numbers for drawing
