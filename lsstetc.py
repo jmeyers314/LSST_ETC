@@ -21,7 +21,7 @@ s0 = {'u': A*0.732,
       'r': A*1.681,
       'i': A*1.249,
       'z': A*0.862,
-      'Y': A*0.452}
+      'y': A*0.452}
 # Sky brightnesses in AB mag / arcsec^2.
 # stole these from http://www.lsst.org/files/docs/gee_137.28.pdf
 # should eventually construct a sky SED (varies with the moon phase) and integrate to get these
@@ -30,7 +30,7 @@ B = {'u': 22.8,
      'r': 21.3,
      'i': 20.3,
      'z': 19.1,
-     'Y': 18.1}
+     'y': 18.1}
 # number of visits
 # From LSST Science Book
 fiducial_nvisits = {'u': 56,
@@ -38,9 +38,7 @@ fiducial_nvisits = {'u': 56,
                     'r': 180,
                     'i': 180,
                     'z': 164,
-                    'Y': 164}
-# exposure time per visit
-visit_time = 30.0
+                    'y': 164}
 # Sky brightness per arcsec^2 per second
 sbar = {}
 for k in B:
@@ -52,15 +50,16 @@ bd = galsim.BaseDeviate(1)
 
 class ETC(object):
     def __init__(self, band, pixel_scale=None, stamp_size=None, threshold=0.0,
-                 nvisits=None):
+                 nvisits=None, visit_time=30.0):
         self.pixel_scale = pixel_scale
         self.stamp_size = stamp_size
         self.threshold = threshold
         self.band = band
         if nvisits is None:
-            self.exptime = fiducial_nvisits[band] * visit_time
-        else:
-            self.exptime = nvisits * visit_time
+            nvisits = fiducial_nvisits[band]
+        self.nvisits = nvisits
+        self.visit_time =  visit_time
+        self.exptime = self.nvisits * self.visit_time
         self.sky = sbar[band] * self.exptime * self.pixel_scale**2
         self.sigma_sky = np.sqrt(self.sky)
         self.s0 = s0[band]
@@ -82,6 +81,9 @@ class ETC(object):
         signal = imgsqr.sum()
         noise = np.sqrt((imgsqr * self.sky).sum())
         return signal / noise
+
+    def nphot(self, mag):
+        return self.s0 * 10**(-0.4*(mag - 24.0)) * self.exptime
 
     def err(self, profile, mag):
         snr = self.SNR(profile, mag)
@@ -144,6 +146,7 @@ if __name__ == '__main__':
 
     # Observation characteristics
     parser.add_argument("--nvisits", type=int, default=None)
+    parser.add_argument("--visit_time", type=float, default=30.0)
 
     # draw the image!
     parser.add_argument("--display", action='store_true',
@@ -165,19 +168,22 @@ if __name__ == '__main__':
     profile = galsim.Convolve(psf, gal)
 
     etc = ETC(args.band, pixel_scale=args.pixel_scale, stamp_size=args.stamp_size,
-              threshold=args.threshold, nvisits=args.nvisits)
+              threshold=args.threshold, nvisits=args.nvisits, visit_time=args.visit_time)
 
     print()
     print("input")
     print("------")
     print("band: {}".format(args.band))
     print("magnitude: {}".format(args.mag))
-    print("nvisits: {}".format(fiducial_nvisits[args.band] if args.nvisits is None else args.nvisits))
+    print("nvisits: {}".format(etc.nvisits))
+    print("visit_time: {}".format(etc.visit_time))
+    print("exptime: {}".format(etc.exptime))
     print()
     print("output")
     print("------")
     print("SNR: {}".format(etc.SNR(profile, args.mag)))
     print("mag err: {}".format(etc.err(profile, args.mag)))
+    print("nphot: {}".format(etc.nphot(args.mag)))
 
     if args.display:
         etc.display(profile, args.mag)
