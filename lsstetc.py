@@ -181,6 +181,7 @@ if __name__ == '__main__':
     print()
     print("output")
     print("------")
+    print("sigma_sky: {}".format(etc.sigma_sky))
     print("SNR: {}".format(etc.SNR(profile, args.mag)))
     print("mag err: {}".format(etc.err(profile, args.mag)))
     print("nphot: {}".format(etc.nphot(args.mag)))
